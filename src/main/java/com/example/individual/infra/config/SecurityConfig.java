@@ -48,7 +48,10 @@ public class SecurityConfig {
 		http.addFilterAt(new JwtAuthenticationFilter(tokenManager), BasicAuthenticationFilter.class);
 		http.authorizeHttpRequests(
 			(authorizeRequests)
-				-> authorizeRequests.anyRequest().permitAll());
+				-> authorizeRequests
+				.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+				.requestMatchers("/auth/**").permitAll() // 로그인/회원가입 등 인증이 필요 없는 API 추가
+				.anyRequest().authenticated());
 		return http.build();
 	}
 
