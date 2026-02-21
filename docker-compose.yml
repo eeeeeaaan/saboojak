@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: individual-team:latest
+    container_name: individual-team-server
+    ports:
+      - "8080:8080" # 외부에서 8080으로 접속
+    environment:
+      # 프로파일을 하나로 고정하거나 제거 (기본값 사용 시)
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CONFIG_ADDITIONAL_LOCATION=file:/app/config/
+    volumes:
+      # 로컬의 비밀번호/설정 파일을 컨테이너 내부로 주입
+      - /home/ubuntu/secret/application-secret.yml:/app/config/application-secret.yml:ro
+    networks:
+      - indi-network
+
+networks:
+  indi-network:
+    external: true
