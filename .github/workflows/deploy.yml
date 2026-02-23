@@ -18,7 +18,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/saboojak
+            cd /home/ubuntu/app/saboojak
             
             docker network inspect indi-network >/dev/null 2>&1 || docker network create indi-network
             
