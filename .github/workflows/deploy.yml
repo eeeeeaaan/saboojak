@@ -1,0 +1,48 @@
+name: Deploy to EC2 with Docker
+
+on:
+  push:
+    branches: [ "main" ] # main 브랜치에 push하면 배포 시작
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 1. 깃허브에 없는 시크릿 파일을 생성합니다.
+      - name: Create secret file
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.APPLICATION_SECRET }}" > src/main/resources/application-secret.yml
+
+      # 2. EC2 서버에 접속해서 명령을 내립니다.
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # EC2 내부 작업 시작
+            cd /home/ubuntu
+            
+            # (중요) 아까 로컬에서 했던 것처럼 네트워크가 없으면 만듭니다.
+            docker network inspect indi-network >/dev/null 2>&1 || docker network create indi-network
+            
+            # 프로젝트 폴더로 이동 (이미 폴더가 있다면 git pull, 없다면 clone)
+            if [ -d "individual" ]; then
+              cd individual
+              git pull origin main
+            else
+              git clone https://github.com/${{ github.repository }}.git individual
+              cd individual
+            fi
+            
+            # 빌드 및 실행 (아까 로컬에서 성공한 그 명령어!)
+            sudo docker-compose down
+            sudo docker-compose up --build -d
+            
+            # 용량 관리를 위해 안 쓰는 이미지 정리
+            sudo docker image prune -f
